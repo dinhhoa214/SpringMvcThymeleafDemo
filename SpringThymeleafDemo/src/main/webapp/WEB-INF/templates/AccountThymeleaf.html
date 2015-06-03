@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>Spring MVC + Thymeleaf Example</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"
+	th:href="@{resources/css/bootstrap.css}" />
+<link rel="stylesheet" type="text/css"
+	href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css"
+	th:href="@{resources/css/jquery-ui.css}" />
+
+<!-- Latest compiled and minified JavaScript -->
+<script
+	src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
+	th:src="@{/resources/jquery/jquery.min.js}"></script>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"
+	th:src="@{/resources/jquery/jquery-ui.js}"></script>
+
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"
+	th:src="@{/resources/jquery/bootstrap.min.js}"></script>
+<script>
+function doAjaxPostDelete(id){
+	var idNo = id;  
+	var $dialog = $('<div></div>').html('Are you sure delete ID = '+idNo).dialog({
+    	title: "Delete Account ?",
+    	height: 200,
+    	width: 350,
+    	modal: true, 
+    	buttons: [
+    	          {
+    	            text: "No",
+    	            icons: {
+    	              primary: "ui-icon-heart"
+    	            },
+    	            click: function() {
+    	            	$( this ).dialog( "close" );
+    	            	
+    	            } 
+    	          },
+    	          {
+      	            text: "Yes",
+      	            icons: {
+      	              primary: "ui-icon-heart"
+      	            },
+      	            click: function() {
+      	            	$.ajax({
+	    	      			  type: "POST",
+	    	      			  url: "delete",
+	    	      			  data: "id="+idNo ,
+	    	      			  success: function(response){   
+	    	      				  alert(response );  
+	    	      			  }
+      	            	}); 	  
+      	            	$( this ).dialog( "close" ); 
+      	            	document.location.reload(false);
+      	            } 
+      	          }
+    	        ]
+    	}); 
+}   
+function getListOfRow(){
+	var e = document.getElementById("maxRow");
+	var numOfSelect = e.options[e.selectedIndex].value;  
+	window.location.replace("http://localhost:8080/SpringThymeleafDemo/getList?maxRows="+numOfSelect);
+}
+</script>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<h1>Account List | Bootstrap Paging</h1>
+
+		</div>
+
+		<div class="row">
+			<div class="col-sm-4">
+				<div class="form-group">
+
+					<span th:text="|Total: ${numCountRows} records.|"> </span>
+					<p />
+
+					<label>Show: <select id="maxRow" onchange="getListOfRow()">
+							<option th:each="i : ${#numbers.sequence(5, 20,5)}"
+								th:value="${i}" th:text="${i}" th:selected="${ i==maxRow} ">Options</option>
+					</select> rows in table.
+					</label>
+				</div>
+			</div>
+			<div class="col-sm-4 text-center">
+				<ul class="pagination pagination-sm "
+					th:each="i : ${#numbers.sequence(1, numPages)}">
+					<li th:if="${i} == ${numOfPage} " class="active"><a href="#"
+						th:href="@{/getList(record=${i},maxRows=${maxRow})}"
+						th:text="${i}"></a></li>
+					<li th:unless="${i} == ${numOfPage}"><a href="#"
+						th:href="@{/getList(record=${i},maxRows=${maxRow})}"
+						th:text="${i}"></a></li>
+				</ul>
+			</div>
+			<div class="col-sm-4">
+				<p class="text-right">
+					<a href="#" th:href="@{/getList(record=${numPages})}"
+						class="btn btn-info">Add new Account</a>
+				</p>
+			</div>
+		</div>
+		<div class="table-responsive">
+			<table id="myTable" class="table table-striped table-bordered" >
+				<thead>
+					<tr>
+						<th>User Id</th>
+						<th>Name</th>
+						<th>Time</th>
+						<th>Status</th>
+						<th>Is Public</th>
+						<th>Edit</th>
+						<th>Delete</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr data-th-each="acc : ${Accounts}">
+						<td data-th-text="${acc.id}">1</td>
+						<td data-th-text="${acc.name}">John</td>
+						<td data-th-text="${acc.time}">12-12-2014</td>
+						<td data-th-text="${acc.status}">Dang su dung</td>
+						<td data-th-text="${acc.isPublic}">false</td>
+
+						<td><a href="#"
+							th:href="@{/edit(id=${acc.id},record=${numOfPage},maxRows=${maxRow})}">Edit
+						</a></td>
+						<td>
+							<button th:onclick="'javascript:doAjaxPostDelete(\'' + ${acc.id} + '\');'"
+							 class="btn btn-default">
+								Delete</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<form th:action="@{/saveAccount(record=${numOfPage},maxRows=${maxRow})}"
+					th:object="${account}" method="post">
+					<table class="table table-condensed">
+						<tr>
+							<td>ID:</td>
+							<td><input type="text" th:field="*{id}" readonly="readonly"/></td>
+						</tr>
+						<tr>
+							<td>Name:</td>
+							<td><input type="text" th:field="*{name}" /></td>
+						</tr>
+						<tr>
+							<td>Modifer Time:</td>
+							<td><input type="text" th:field="*{time}"
+								placeholder="YYYY/MM/DD" /></td>
+						</tr>
+						<tr>
+							<td>Status:</td>
+							<td><select th:field="*{status}">
+									<option value="">Select Status</option>
+									<option value="Dang su dung">Dang su dung</option>
+									<option value="Tam khoa">Tam khoa</option>
+									<option value="Het han">Het han</option>
+							</select></td>
+						</tr>
+						<tr>
+							<td>Public:</td>
+							<td><input type="radio" th:field="*{isPublic}"
+								th:value="true" /> True <input type="radio"
+								th:field="*{isPublic}" th:value="false" /> False</td>
+						</tr>
+						<tr>
+							<td><input type="submit" value="Save"
+								class="btn btn-success" /></td>
+						</tr>
+					</table>
+					</form>
+			</div>
+			<div class="col-sm-6">
+				<div class="alert alert-success">
+					<strong>Console:</strong> message.
+
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+</html>
